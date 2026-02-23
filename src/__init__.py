@@ -110,7 +110,18 @@ class DoubanBookSearcher:
             res_content = gzip.decompress(res.read())
         else:
             res_content = res.read()
-        return res_content.decode(res.headers.get_content_charset())
+        
+        # 尝试多种方式获取字符集
+        charset = res.headers.get_content_charset()
+        if not charset:
+            # 豆瓣通常使用 utf-8
+            charset = 'utf-8'
+        
+        try:
+            return res_content.decode(charset)
+        except (UnicodeDecodeError, LookupError):
+            # 如果指定的编码失败，尝试 utf-8
+            return res_content.decode('utf-8', errors='replace')
 
     def get_headers(self):
         headers = {'User-Agent': random_user_agent(), 'Accept-Encoding': 'gzip, deflate'}
